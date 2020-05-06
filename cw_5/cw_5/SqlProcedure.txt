@@ -1,0 +1,24 @@
+﻿CREATE PROCEDURE PromoteStudents @Studies NVARCHAR(20), @Semester INT
+AS
+BEGIN
+	BEGIN TRANSACTION
+	BEGIN TRY
+		IF NOT EXISTS(SELECT * FROM Studies WHERE Name = @Studies)
+		BEGIN 
+			RAISERROR('Studies does not exist',11,1)
+		END
+		DECLARE @IdStudy INT = (SELECT IdStudy FROM Studies WHERE Name = @Studies);
+
+		IF NOT EXISTS(SELECT * FROM Enrollment WHERE Semester = @Semester AND IdStudy = @IdStudy)
+		BEGIN
+			RAISERROR('There are no students whom should have be promoted',11,1)
+		END
+		
+		UPDATE Enrollment SET Semester = (@Semester+1) WHERE Semester = @Semester AND IdStudy = @IdStudy
+		COMMIT TRANSACTION
+	END TRY
+	BEGIN CATCH
+		SELECT ERROR_MESSAGE() AS ErrorMessage
+		ROLLBACK TRANSACTION;
+	END CATCH
+END
