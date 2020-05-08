@@ -87,29 +87,28 @@ namespace cw_5.Services
                 return insertedData;
             }
         }
-        public void EnrollStudentPromotions(EnrollStudentPromotions promotion)
+        public PromotionStudentRepsonse EnrollStudentPromotions(EnrollStudentPromotions promotion)
         {
             using (var connection = new SqlConnection("Data Source=db-mssql.pjwstk.edu.pl;Initial Catalog=s16578;Integrated Security=True"))
             using (var command = connection.CreateCommand())
             using (var transaction = new TransactionScope())
             {
+                var insertedData = new PromotionStudentRepsonse();
                 try
                 {
                     connection.Open();
-
                 command.CommandText = "EXEC PromoteStudents @Studies = @studies, @Semester = @semester";
                 command.Parameters.AddWithValue("@studies", promotion.Studies);
                 command.Parameters.AddWithValue("@semester", promotion.Semester);
 
-                
                     using (var dataReader = command.ExecuteReader())
                     {
-
-
                         if (dataReader.Read())
                         {
-                            //var errorMessage = dataReader["ErrorMessage"];
-                            //return BadRequest(errorMessage);
+                            insertedData.IdEnrollment = dataReader.GetInt32(0);
+                            insertedData.Semester = dataReader.GetInt32(2);
+                            insertedData.IdStudy = dataReader.GetInt32(1);
+                            insertedData.StartDate = dataReader.GetDateTime(3);
                         }
                     }
                 }
@@ -117,8 +116,8 @@ namespace cw_5.Services
                 {
                     throw new InvalidOperationException(sqlerror.Message);
                 }
+                return insertedData;
             }
-            //return new OkObjectResult(new { message = "201 OK, Students have been promoted", currentDate = DateTime.Now });
         }
     }
 }

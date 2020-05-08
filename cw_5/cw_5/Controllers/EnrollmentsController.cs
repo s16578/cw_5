@@ -47,12 +47,19 @@ namespace cw_5.Controllers
         {
             try
             {
-                //var promotionService = _service.EnrollStudentPromotions(promotion);
-                return Ok();
+                var enrollment = _service.EnrollStudentPromotions(promotion);
+                var result = new ObjectResult(enrollment);
+                result.StatusCode = (int)HttpStatusCode.Created;
+                return result;
             }
             catch (InvalidOperationException invalidOperation)
             {
-                return BadRequest();
+                return BadRequest(invalidOperation.Message);
+            }
+            catch(Exception execption)
+            {
+                var result = new StatusCodeResult((int)HttpStatusCode.InternalServerError);
+                return result;
             }
         }
 
