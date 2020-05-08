@@ -1,4 +1,6 @@
 ﻿
+using System;
+using System.Net;
 using cw_5.DTOs.Requests;
 using cw_5.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +12,9 @@ namespace cw_5.Controllers
     [ApiController]
     public class EnrollmentsController : ControllerBase
     {
-        private IStudentDbService _service;
+        private IStudentService _service;
 
-        public EnrollmentsController(IStudentDbService service)
+        public EnrollmentsController(IStudentService service)
         {
             _service = service;
         }
@@ -20,9 +22,22 @@ namespace cw_5.Controllers
         [HttpPost]
         public IActionResult EnrollStudents(EnrollStudentRequests newStudent)
         {
-            var service = new SqlServerStudentDbService();
-            return service.EnrollStudents(newStudent);
-            // zwrocenie obiektu enrollment
+            try
+            {
+                var enrollment = _service.EnrollStudent(newStudent);
+                var result = new ObjectResult(enrollment);
+                result.StatusCode = (int) HttpStatusCode.Created;
+                return result;
+            }
+            catch (InvalidOperationException invalidOperation)
+            {
+                return BadRequest(invalidOperation.Message);
+            }
+            catch (Exception exception)
+            {
+                var result = new StatusCodeResult((int)HttpStatusCode.InternalServerError);
+                return result;
+            }
         }
 
         [Route("api/enrollments/promotions")]
@@ -30,9 +45,15 @@ namespace cw_5.Controllers
 
         public IActionResult EnrollStudentPromotions(EnrollStudentPromotions promotion)
         {
-            var service = new SqlServerStudentDbService();
-            return service.EnrollStudentPromotions(promotion);
-            
+            try
+            {
+                //var promotionService = _service.EnrollStudentPromotions(promotion);
+                return Ok();
+            }
+            catch (InvalidOperationException invalidOperation)
+            {
+                return BadRequest();
+            }
         }
 
     }
