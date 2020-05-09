@@ -119,5 +119,25 @@ namespace cw_5.Services
                 return insertedData;
             }
         }
+        public IndexStudentResponse GetStudent(string index)
+        {
+            var indexResponse = new IndexStudentResponse();
+            using (var connection = new SqlConnection("Data Source = db - mssql.pjwstk.edu.pl; Initial Catalog = s16578; Integrated Security = True"))
+            using (var command = connection.CreateCommand())
+            using (var transaction = new TransactionScope())
+            {
+                connection.Open();
+                command.CommandText = "SELECT IndexNumber FROM Student WHERE IndexNumber = @index";
+                command.Parameters.AddWithValue("@index", index);
+
+                var dataReader = command.ExecuteReader();
+                if (!dataReader.Read())
+                {
+                    throw new UnauthorizedAccessException("No access");
+                }
+                indexResponse.Index = (string)dataReader.GetSqlString(0);
+            }
+            return indexResponse;
+        }
     }
 }

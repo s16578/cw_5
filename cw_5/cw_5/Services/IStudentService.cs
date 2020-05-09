@@ -7,5 +7,6 @@ namespace cw_5.Services
     {
         EnrollStudentResponse EnrollStudent(EnrollStudentRequests newStudent);
         PromotionStudentRepsonse EnrollStudentPromotions(EnrollStudentPromotions promotion);
+        IndexStudentResponse GetStudent(string index);
     }
 }
