@@ -1,0 +1,10 @@
+
+method: GET
+path: /api/enrollments
+type: 
+queryString: 16.05.2020 14:12:31
+
+method: GET
+path: /favicon.ico
+type: 
+queryString: 16.05.2020 14:12:32

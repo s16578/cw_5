@@ -122,7 +122,7 @@ namespace cw_5.Services
         public IndexStudentResponse GetStudent(string index)
         {
             var indexResponse = new IndexStudentResponse();
-            using (var connection = new SqlConnection("Data Source = db - mssql.pjwstk.edu.pl; Initial Catalog = s16578; Integrated Security = True"))
+            using (var connection = new SqlConnection("Data Source=db-mssql.pjwstk.edu.pl;Initial Catalog=s16578;Integrated Security=True"))
             using (var command = connection.CreateCommand())
             using (var transaction = new TransactionScope())
             {
@@ -131,12 +131,14 @@ namespace cw_5.Services
                 command.Parameters.AddWithValue("@index", index);
 
                 var dataReader = command.ExecuteReader();
-                if (!dataReader.Read())
-                {
-                    throw new UnauthorizedAccessException("No access");
-                }
+                dataReader.Read();
                 indexResponse.Index = (string)dataReader.GetSqlString(0);
-            }
+
+                if (indexResponse == null)
+                {
+                    throw new UnauthorizedAccessException("No access for this user");
+                }
+                }
             return indexResponse;
         }
     }

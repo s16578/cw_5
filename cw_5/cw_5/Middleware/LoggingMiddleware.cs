@@ -34,9 +34,14 @@ namespace cw_5.Middleware
                 {
                     
                     bodyString = await reader.ReadToEndAsync();
+                    bodyString = bodyString
+                        + Environment.NewLine + "method: " + method
+                        + Environment.NewLine + "path: " + path
+                        + Environment.NewLine + "type: " + type
+                        + Environment.NewLine + "queryString: " + time;
                     context.Request.Body.Position = 0;
 
-                    string filePath = System.IO.Directory.GetCurrentDirectory() + "\\logfile_txt";
+                    string filePath = System.IO.Directory.GetCurrentDirectory() + "\\requestLog.txt";
 
                     using(StreamWriter sr = File.AppendText(filePath))
                     {
