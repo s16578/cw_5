@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 
 namespace cw_5.DTOs.Responses
 {

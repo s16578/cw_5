@@ -1,8 +1,6 @@
 ﻿using cw_5.DTOs.Responses;
 using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace cw_5.Middleware

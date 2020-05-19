@@ -1,10 +1,6 @@
 ﻿using cw_5.DTOs.Requests;
-using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Transactions;
 using cw_5.DTOs.Responses;
 
@@ -131,15 +127,48 @@ namespace cw_5.Services
                 command.Parameters.AddWithValue("@index", index);
 
                 var dataReader = command.ExecuteReader();
-                dataReader.Read();
-                indexResponse.Index = (string)dataReader.GetSqlString(0);
 
-                if (indexResponse == null)
+                if (!dataReader.Read())
                 {
                     throw new UnauthorizedAccessException("No access for this user");
                 }
-                }
+
+                indexResponse.Index = (string)dataReader.GetSqlString(0);
+                connection.Close();
+            }
             return indexResponse;
+        }
+
+        public StudentResponse Login(LoginRequest login)
+        {
+            var student = new StudentResponse();
+
+            using(var connection = new SqlConnection("Data Source=db-mssql.pjwstk.edu.pl;Initial Catalog=s16578;Integrated Security=True"))
+            using(var command = connection.CreateCommand())
+            using(var transaction = new TransactionScope())
+            {
+                connection.Open();
+                command.CommandText = "SELECT FirstName FROM Students WHERE IndexNumber = @login AND Password = @password";
+                command.Parameters.AddWithValue("@login", login.Index);
+                command.Parameters.AddWithValue("@password", login.Password);
+
+                var reader = command.ExecuteReader();
+
+                if(!reader.Read())
+                {
+                    throw new UnauthorizedAccessException("Wrong password or user name");
+                }
+
+                student.FirstName = (string)reader.GetSqlString(0);
+                student.Index = login.Index;
+
+                return student;
+            }
+
+
+
+
+
         }
     }
 }

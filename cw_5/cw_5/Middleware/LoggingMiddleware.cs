@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,7 +36,8 @@ namespace cw_5.Middleware
                         + Environment.NewLine + "method: " + method
                         + Environment.NewLine + "path: " + path
                         + Environment.NewLine + "type: " + type
-                        + Environment.NewLine + "queryString: " + time;
+                        + Environment.NewLine + "time: " + time
+                        + Environment.NewLine + "queryString: " + queryString;
                     context.Request.Body.Position = 0;
 
                     string filePath = System.IO.Directory.GetCurrentDirectory() + "\\requestLog.txt";

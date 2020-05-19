@@ -1,7 +1,8 @@
 ﻿namespace cw_5.DTOs.Responses
 {
-    public class IndexStudentResponse
+    public class StudentResponse
     {
+        public string FirstName { get; set; }
         public string Index { get; set; }
     }
 }
