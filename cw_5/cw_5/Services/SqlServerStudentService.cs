@@ -3,6 +3,8 @@ using System;
 using System.Data.SqlClient;
 using System.Transactions;
 using cw_5.DTOs.Responses;
+using cw_5.Model;
+using Microsoft.IdentityModel.Tokens;
 
 namespace cw_5.Services
 {
@@ -148,7 +150,7 @@ namespace cw_5.Services
             using(var transaction = new TransactionScope())
             {
                 connection.Open();
-                command.CommandText = "SELECT FirstName FROM Students WHERE IndexNumber = @login AND Password = @password";
+                command.CommandText = "SELECT FirstName, Role FROM Students WHERE IndexNumber = @login AND Password = @password";
                 command.Parameters.AddWithValue("@login", login.Index);
                 command.Parameters.AddWithValue("@password", login.Password);
 
@@ -160,15 +162,53 @@ namespace cw_5.Services
                 }
 
                 student.FirstName = (string)reader.GetSqlString(0);
+                student.Role = (string)reader.GetSqlString(1);
                 student.Index = login.Index;
-
+                
                 return student;
             }
+        }
 
+        public void InsertToken(Guid token, string Index)
+        {
+            string stringToken = token.ToString();
 
+            using(var connection = new SqlConnection("Data Source=db-mssql.pjwstk.edu.pl;Initial Catalog=s16578;Integrated Security=True"))
+            using(var command = connection.CreateCommand())
+            using(var transaction = new TransactionScope())
+            {
+                connection.Open();
+                command.CommandText = "UPDATE Student SET Token = @token WHERE Index = @index";
+                command.Parameters.AddWithValue("@index", Index);
+                command.Parameters.AddWithValue("@token", stringToken);
 
+                command.ExecuteNonQuery();
+            }
+        }
 
+        public StudentResponse RefreshToken(Guid token)
+        {
+            string stringToken = token.ToString();
+            StudentResponse student = new StudentResponse();
 
+            using (var connnection = new SqlConnection("Data Source=db-mssql.pjwstk.edu.pl;Initial Catalog=s16578;Integrated Security=True"))
+            using(var command = connnection.CreateCommand())
+            using(var transaction = new TransactionScope())
+            {
+                connnection.Open();
+                command.CommandText = "SELECT FirstName, Index, Role FROM Student WHERE Token = @token";
+                command.Parameters.AddWithValue("@token", stringToken);
+
+                
+                var dataReader = command.ExecuteReader();
+                while(dataReader.Read())
+                {
+                    student.FirstName = (string)dataReader.GetString(0);
+                    student.Index = (string)dataReader.GetString(1);
+                    student.Role = (string)dataReader.GetString(2);
+                }
+            }
+            return student;
         }
     }
 }

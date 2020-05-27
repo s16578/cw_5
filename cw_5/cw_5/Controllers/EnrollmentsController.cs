@@ -82,7 +82,7 @@ namespace cw_5.Controllers
             {
                 new Claim(ClaimTypes.Name, student.FirstName),
                 new Claim(ClaimTypes.NameIdentifier, student.Index),
-                new Claim(ClaimTypes.Role, "employee")
+                new Claim(ClaimTypes.Role, student.Role)
             };
             
             
@@ -98,15 +98,50 @@ namespace cw_5.Controllers
                 signingCredentials: creds    
             );
 
+
+            var refreshToken = Guid.NewGuid();
+            _service.InsertToken(refreshToken, student.Index);
+            
             return Ok(new
             {
                 accessToken = new JwtSecurityTokenHandler().WriteToken(token),
-                refreshToken = Guid.NewGuid()
+                refreshToken
             });
         }
 
-    }
+        [HttpPost]
+        [Route("api/token/{token}")]
+        public IActionResult RefreshToken(Guid token)
+        {
+            var student = _service.RefreshToken(token);
 
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, student.FirstName),
+                new Claim(ClaimTypes.NameIdentifier, student.Index),
+                new Claim(ClaimTypes.Role, student.Role)
+            };
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("asdhwuqidqkjdahszxcmnbdeiqpwoieqlaskdczlasjdi"));      //Brak klasy Configuration (???)
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var tokenJwt = new JwtSecurityToken
+          (
+              issuer: "Gakko",
+              audience: "Students",
+              claims: claims,
+              expires: DateTime.Now.AddMinutes(15),
+              signingCredentials: creds
+          );
+
+            var newRefreshToken = Guid.NewGuid();
+            _service.InsertToken(newRefreshToken, student.Index);
+            
+            return Ok(new
+            {
+                accessToken = new JwtSecurityTokenHandler().WriteToken(tokenJwt),
+                newRefreshToken
+            });
+        }
 
     
 }

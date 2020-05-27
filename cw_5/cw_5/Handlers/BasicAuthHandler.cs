@@ -54,7 +54,7 @@ namespace AuthenticationSampleWebApp.Handlers
             {
                 new Claim(ClaimTypes.Name, student.FirstName),
                 new Claim(ClaimTypes.NameIdentifier, student.Index),
-                new Claim(ClaimTypes.Role, "employee")
+                new Claim(ClaimTypes.Role, student.Role)
             };
 
             var identity = new ClaimsIdentity(claims, Scheme.Name); //Basic, ...

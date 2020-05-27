@@ -4,5 +4,6 @@
     {
         public string FirstName { get; set; }
         public string Index { get; set; }
+        public string Role { get; set; }
     }
 }
