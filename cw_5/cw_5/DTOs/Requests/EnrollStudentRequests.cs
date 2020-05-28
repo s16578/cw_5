@@ -20,5 +20,8 @@ namespace cw_5.DTOs.Requests
 
         [Required(ErrorMessage ="Studies cannot be empty")]
         public string Studies { get; set; }
+        [Required(ErrorMessage = "Password cannot be empty")]
+        public string Password { get; set; }
+
     }
 }

@@ -14,7 +14,7 @@ namespace cw_5.Controllers
 
     [Route("api/enrollments")]
     [ApiController]
-    
+
     public class EnrollmentsController : ControllerBase
     {
         private IStudentService _service;
@@ -25,14 +25,14 @@ namespace cw_5.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles ="employees")]
+        [Authorize(Roles = "employees")]
         public IActionResult EnrollStudents(EnrollStudentRequests newStudent)
         {
             try
             {
                 var enrollment = _service.EnrollStudent(newStudent);
                 var result = new ObjectResult(enrollment);
-                result.StatusCode = (int) HttpStatusCode.Created;
+                result.StatusCode = (int)HttpStatusCode.Created;
                 return result;
             }
             catch (InvalidOperationException invalidOperation)
@@ -63,7 +63,7 @@ namespace cw_5.Controllers
             {
                 return BadRequest(invalidOperation.Message);
             }
-            catch(Exception execption)
+            catch (Exception execption)
             {
                 var result = new StatusCodeResult((int)HttpStatusCode.InternalServerError);
                 return result;
@@ -75,7 +75,7 @@ namespace cw_5.Controllers
 
         public IActionResult Login(LoginRequest request)
         {
-            
+
             var student = _service.Login(request);
 
             var claims = new[]
@@ -84,8 +84,8 @@ namespace cw_5.Controllers
                 new Claim(ClaimTypes.NameIdentifier, student.Index),
                 new Claim(ClaimTypes.Role, student.Role)
             };
-            
-            
+
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("asdhwuqidqkjdahszxcmnbdeiqpwoieqlaskdczlasjdi")); //Brak klasy Configuration (???)
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -95,13 +95,13 @@ namespace cw_5.Controllers
                 audience: "Students",
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(15),
-                signingCredentials: creds    
+                signingCredentials: creds
             );
 
 
             var refreshToken = Guid.NewGuid();
             _service.InsertToken(refreshToken, student.Index);
-            
+
             return Ok(new
             {
                 accessToken = new JwtSecurityTokenHandler().WriteToken(token),
@@ -135,7 +135,7 @@ namespace cw_5.Controllers
 
             var newRefreshToken = Guid.NewGuid();
             _service.InsertToken(newRefreshToken, student.Index);
-            
+
             return Ok(new
             {
                 accessToken = new JwtSecurityTokenHandler().WriteToken(tokenJwt),
@@ -143,5 +143,6 @@ namespace cw_5.Controllers
             });
         }
 
-    
+
+    }
 }

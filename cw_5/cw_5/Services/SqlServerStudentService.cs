@@ -5,6 +5,9 @@ using System.Transactions;
 using cw_5.DTOs.Responses;
 using cw_5.Model;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace cw_5.Services
 {
@@ -54,13 +57,19 @@ namespace cw_5.Services
                     dataReader.Read();
                     idEnrollment = (int)dataReader.GetInt32(0);
                 }
+
+                var salt = CreateSalt();
+                var password = newStudent.Password;
+                var hashPassword = CreateHashPassword(password, salt);
                 
-                command.CommandText = "INSERT INTO Student (IndexNumber, FirstName, LastName, BirthDate, IdEnrollment)" +
-                                        "VALUES (@index, @firstname, @lastname, @birthDate, @IdEnrollment)";
+                command.CommandText = "INSERT INTO Student (IndexNumber, FirstName, LastName, BirthDate, IdEnrollment, Salt, Password)" +
+                                        "VALUES (@index, @firstname, @lastname, @birthDate, @IdEnrollment, @salt, @password)";
                 command.Parameters.AddWithValue("@firstname", newStudent.FirstName);
                 command.Parameters.AddWithValue("@lastname", newStudent.LastName);
                 command.Parameters.AddWithValue("@birthDate", newStudent.BirthDate);
                 command.Parameters.AddWithValue("@IdEnrollment", idEnrollment);
+                command.Parameters.AddWithValue("@Salt", salt);
+                command.Parameters.AddWithValue("@Password", hashPassword);
 
                 command.ExecuteNonQuery();
 
@@ -143,28 +152,58 @@ namespace cw_5.Services
 
         public StudentResponse Login(LoginRequest login)
         {
+            /* var student = new StudentResponse();
+
+             using(var connection = new SqlConnection("Data Source=db-mssql.pjwstk.edu.pl;Initial Catalog=s16578;Integrated Security=True"))
+             using(var command = connection.CreateCommand())
+             using(var transaction = new TransactionScope())
+             {
+                 connection.Open();
+                 command.CommandText = "SELECT FirstName, Role FROM Students WHERE IndexNumber = @login AND Password = @password";
+                 command.Parameters.AddWithValue("@login", login.Index);
+                 command.Parameters.AddWithValue("@password", login.Password);
+
+                 var reader = command.ExecuteReader();
+
+                 if(!reader.Read())
+                 {
+                     throw new UnauthorizedAccessException("Wrong password or user name");
+                 }
+
+                 student.FirstName = (string)reader.GetSqlString(0);
+                 student.Role = (string)reader.GetSqlString(1);
+                 student.Index = login.Index;
+
+                 return student;
+             */
             var student = new StudentResponse();
 
-            using(var connection = new SqlConnection("Data Source=db-mssql.pjwstk.edu.pl;Initial Catalog=s16578;Integrated Security=True"))
-            using(var command = connection.CreateCommand())
-            using(var transaction = new TransactionScope())
+            using (var connection = new SqlConnection("Data Source=db-mssql.pjwstk.edu.pl;Initial Catalog=s16578;Integrated Security=True"))
+            using (var command = connection.CreateCommand())
+            using (var transaction = new TransactionScope())
             {
                 connection.Open();
-                command.CommandText = "SELECT FirstName, Role FROM Students WHERE IndexNumber = @login AND Password = @password";
+                command.CommandText = "SELECT FirstName, Role, Password, Salt FROM Students WHERE IndexNumber = @login";
                 command.Parameters.AddWithValue("@login", login.Index);
-                command.Parameters.AddWithValue("@password", login.Password);
 
                 var reader = command.ExecuteReader();
 
-                if(!reader.Read())
+                if (!reader.Read())
                 {
-                    throw new UnauthorizedAccessException("Wrong password or user name");
+                    throw new UnauthorizedAccessException("There is no student with such login");
+                }
+                var password = (string)reader.GetString(2);
+                var salt = (string)reader.GetString(3);
+
+                if(!(CreateHashPassword(login.Password, salt) == password))
+                {
+                    throw new UnauthorizedAccessException("Wrong password");
                 }
 
                 student.FirstName = (string)reader.GetSqlString(0);
                 student.Role = (string)reader.GetSqlString(1);
                 student.Index = login.Index;
-                
+
                 return student;
             }
         }
@@ -201,14 +240,43 @@ namespace cw_5.Services
 
                 
                 var dataReader = command.ExecuteReader();
-                while(dataReader.Read())
+                if(!dataReader.Read())
                 {
-                    student.FirstName = (string)dataReader.GetString(0);
-                    student.Index = (string)dataReader.GetString(1);
-                    student.Role = (string)dataReader.GetString(2);
+                    throw new InvalidOperationException("There is no token in db");        
                 }
+
+                student.FirstName = (string)dataReader.GetString(0);
+                student.Index = (string)dataReader.GetString(1);
+                student.Role = (string)dataReader.GetString(2);
+
             }
             return student;
         }
+        public static string CreateHashPassword(string value, string salt)
+        {
+            var valueBytes = KeyDerivation.Pbkdf2(
+                             password: value,
+                             salt: Encoding.UTF8.GetBytes(salt),
+                             prf: KeyDerivationPrf.HMACSHA512,
+                             iterationCount: 20000,
+                             numBytesRequested: 256 / 8);
+
+
+            return Convert.ToBase64String(valueBytes);
+        }
+
+        public static string CreateSalt()
+        {
+            byte[] randomBytes = new byte[128 / 8];
+            using(var generator = RandomNumberGenerator.Create())
+            {
+                generator.GetBytes(randomBytes);
+                return Convert.ToBase64String(randomBytes);
+            }
+        }
+
+
+
+
     }
 }
